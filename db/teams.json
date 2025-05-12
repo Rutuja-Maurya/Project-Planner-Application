@@ -1,0 +1,25 @@
+[
+  {
+    "id": "101",
+    "name": "Team1",
+    "description": "Software Development",
+    "admin": "10001",
+    "creation_time": "2025-05-01T13:21:07.077546",
+    "users": [
+      "1001",
+      "1002"
+    ]
+  },
+  {
+    "id": "102",
+    "name": "Team2",
+    "description": "Software Testing",
+    "admin": "10002",
+    "creation_time": "2025-05-01T18:21:06.637186",
+    "users": [
+      "1003",
+      "1006",
+      "1004"
+    ]
+  }
+]

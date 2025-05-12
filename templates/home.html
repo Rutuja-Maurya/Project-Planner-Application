@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Project Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Welcome to Project Planner</h1>
+    
+    <div class="row">
+        <!-- Users Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-people"></i> Users
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Manage Users</h5>
+                    <p class="card-text">Create and manage users, assign them to teams, and track their tasks.</p>
+                    <a href="/api/users/list/" class="btn btn-primary">View Users</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-diagram-3"></i> Teams
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Manage Teams</h5>
+                    <p class="card-text">Create teams, add members, and organize your project structure.</p>
+                    <a href="/api/teams/list/" class="btn btn-primary">View Teams</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boards Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-kanban"></i> Boards
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Manage Boards</h5>
+                    <p class="card-text">Create project boards, add tasks, and track progress.</p>
+                    <a href="{% url 'list_boards' %}" class="btn btn-primary">View Boards</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning"></i> Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="showCreateUserModal()">
+                                <i class="bi bi-person-plus"></i> New User
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="showCreateTeamModal()">
+                                <i class="bi bi-people"></i> New Team
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="showCreateBoardModal()">
+                                <i class="bi bi-plus-square"></i> New Board
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary w-100 mb-2" onclick="showCreateTaskModal()">
+                                <i class="bi bi-list-check"></i> New Task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="userName" required maxlength="64">
+                    </div>
+                    <div class="mb-3">
+                        <label for="userDisplayName" class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="userDisplayName" required maxlength="64">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Team Modal -->
+<div class="modal fade" id="createTeamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Team</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTeamForm">
+                    <div class="mb-3">
+                        <label for="teamName" class="form-label">Team Name</label>
+                        <input type="text" class="form-control" id="teamName" required maxlength="64">
+                    </div>
+                    <div class="mb-3">
+                        <label for="teamDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="teamDescription" required maxlength="128"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teamAdmin" class="form-label">Admin User</label>
+                        <select class="form-select" id="teamAdmin" required>
+                            <option value="">Select an admin...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createTeam()">Create Team</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Board Modal -->
+<div class="modal fade" id="createBoardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Board</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createBoardForm">
+                    <div class="mb-3">
+                        <label for="boardName" class="form-label">Board Name</label>
+                        <input type="text" class="form-control" id="boardName" required maxlength="64">
+                    </div>
+                    <div class="mb-3">
+                        <label for="boardDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="boardDescription" required maxlength="128"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teamId" class="form-label">Team</label>
+                        <select class="form-select" id="teamId" required>
+                            <option value="">Select a team...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createBoard()">Create Board</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTaskForm">
+                    <div class="mb-3">
+                        <label for="taskBoard" class="form-label">Board</label>
+                        <select class="form-select" id="taskBoard" required onchange="loadTeamMembers()">
+                            <option value="">Select a board...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="taskTitle" required maxlength="64">
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="taskDescription" required maxlength="128"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignedUser" class="form-label">Assign To</label>
+                        <select class="form-select" id="assignedUser" required>
+                            <option value="">Select a team member...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createTask()">Create Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showCreateUserModal() {
+    new bootstrap.Modal(document.getElementById('createUserModal')).show();
+}
+
+function createUser() {
+    const name = document.getElementById('userName').value;
+    const displayName = document.getElementById('userDisplayName').value;
+
+    fetch('/api/users/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            display_name: displayName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert('User created successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+            window.location.href = '/api/users/list/';
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+function showCreateTeamModal() {
+    // Load users for the admin dropdown
+    fetch('/api/users/list/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(users => {
+        const select = document.getElementById('teamAdmin');
+        select.innerHTML = '<option value="">Select an admin...</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.display_name;
+            select.appendChild(option);
+        });
+        new bootstrap.Modal(document.getElementById('createTeamModal')).show();
+    })
+    .catch(error => {
+        alert('Error loading users: ' + error.message);
+    });
+}
+
+function createTeam() {
+    const name = document.getElementById('teamName').value;
+    const description = document.getElementById('teamDescription').value;
+    const admin = document.getElementById('teamAdmin').value;
+
+    if (!name || !description || !admin) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    fetch('/api/teams/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            description: description,
+            admin: admin
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert('Team created successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('createTeamModal')).hide();
+            window.location.href = '/api/teams/list/';
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+function showCreateBoardModal() {
+    // Load teams for the dropdown
+    fetch('/api/teams/list/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        const select = document.getElementById('teamId');
+        select.innerHTML = '<option value="">Select a team...</option>';
+        data.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            select.appendChild(option);
+        });
+        new bootstrap.Modal(document.getElementById('createBoardModal')).show();
+    })
+    .catch(error => {
+        alert('Error loading teams: ' + error.message);
+    });
+}
+
+function createBoard() {
+    const name = document.getElementById('boardName').value;
+    const description = document.getElementById('boardDescription').value;
+    const teamId = document.getElementById('teamId').value;
+
+    if (!name || !description || !teamId) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    fetch('/api/boards/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            description: description,
+            team_id: teamId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        alert('Board created successfully!');
+        window.location.href = '/api/boards/';
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function showCreateTaskModal() {
+    // Load boards for the dropdown
+    fetch('/api/boards/', {
+        method: 'GET',  // Change to GET since we want to list all boards
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();  // Get the response as text first
+    })
+    .then(text => {
+        // Create a temporary div to parse the HTML response
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
+
+        // Extract board data from the HTML
+        const boardCards = tempDiv.querySelectorAll('.col-md-4 .card');
+        const boards = Array.from(boardCards).map(card => {
+            const titleElement = card.querySelector('.card-title');
+            const idElement = card.querySelector('.card-text.text-muted');
+            const statusElement = card.querySelector('.badge');
+            
+            if (!titleElement || !idElement || !statusElement) {
+                return null;
+            }
+
+            return {
+                id: idElement.textContent.replace('ID: ', '').trim(),
+                name: titleElement.textContent.trim(),
+                status: statusElement.textContent.trim()
+            };
+        }).filter(board => board !== null);  // Remove any null entries
+
+        const select = document.getElementById('taskBoard');
+        select.innerHTML = '<option value="">Select a board...</option>';
+        boards.forEach(board => {
+            if (board.status === 'OPEN') {  // Only show open boards
+                const option = document.createElement('option');
+                option.value = board.id;
+                option.textContent = board.name;
+                select.appendChild(option);
+            }
+        });
+        new bootstrap.Modal(document.getElementById('createTaskModal')).show();
+    })
+    .catch(error => {
+        alert('Error loading boards: ' + error.message);
+    });
+}
+
+function loadTeamMembers() {
+    const boardId = document.getElementById('taskBoard').value;
+    if (!boardId) {
+        document.getElementById('assignedUser').innerHTML = '<option value="">Select a team member...</option>';
+        return;
+    }
+
+    fetch('/api/teams/users/list/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: boardId })
+    })
+    .then(response => response.json())
+    .then(users => {
+        const select = document.getElementById('assignedUser');
+        select.innerHTML = '<option value="">Select a team member...</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.display_name;
+            select.appendChild(option);
+        });
+    })
+    .catch(error => {
+        alert('Error loading team members: ' + error.message);
+    });
+}
+
+function createTask() {
+    const boardId = document.getElementById('taskBoard').value;
+    const title = document.getElementById('taskTitle').value;
+    const description = document.getElementById('taskDescription').value;
+    const userId = document.getElementById('assignedUser').value;
+
+    if (!boardId || !title || !description || !userId) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    fetch('/api/boards/tasks/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            board_id: boardId,
+            title: title,
+            description: description,
+            user_id: userId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        alert('Task created successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+        window.location.href = '/api/boards/';
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+</script>
+{% endblock %} 

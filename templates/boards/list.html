@@ -1,0 +1,475 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Boards - Project Planner{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Project Boards</h1>
+        <button class="btn btn-primary" onclick="showCreateBoardModal()">
+            <i class="bi bi-kanban"></i> Create Board
+        </button>
+    </div>
+
+    <div class="row">
+        {% for board in boards %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ board.name }}</h5>
+                    <span class="badge {% if board.status == 'OPEN' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ board.status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted">ID: {{ board.id }}</p>
+                    <p class="card-text">{{ board.description }}</p>
+                    <div class="progress mb-3">
+                        {% with completed=board.completed_tasks total=board.total_tasks %}
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {% if total > 0 %}{{ completed|divisibleby:total|multiply:100 }}{% else %}0{% endif %}%"
+                             aria-valuenow="{% if total > 0 %}{{ completed|divisibleby:total|multiply:100 }}{% else %}0{% endif %}"
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ completed }}/{{ total }} Tasks
+                        </div>
+                        {% endwith %}
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewBoardDetails('{{ board.id }}')">
+                            View Tasks
+                        </button>
+                        <div>
+                            {% if board.status == 'OPEN' %}
+                            <button class="btn btn-outline-success btn-sm me-2" onclick="showAddTaskModal('{{ board.id }}')">
+                                Add Task
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="closeBoard('{{ board.id }}')">
+                                Close Board
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteBoard('{{ board.id }}')">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No boards found. Click the "Create Board" button to create one.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Create Board Modal -->
+<div class="modal fade" id="createBoardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Board</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createBoardForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Board Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required maxlength="64">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" required maxlength="128"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="team_id" class="form-label">Team</label>
+                        <select class="form-select" id="team_id" name="team_id" required>
+                            <option value="">Select a team...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="createBoard()">Create Board</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Board Details Modal -->
+<div class="modal fade" id="boardDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Board Tasks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Open</h6>
+                            </div>
+                            <div class="card-body p-2" id="openTasks">
+                                <!-- Open tasks will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">In Progress</h6>
+                            </div>
+                            <div class="card-body p-2" id="inProgressTasks">
+                                <!-- In Progress tasks will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">Complete</h6>
+                            </div>
+                            <div class="card-body p-2" id="completeTasks">
+                                <!-- Completed tasks will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTaskForm">
+                    <input type="hidden" id="board_id" name="board_id">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required maxlength="64">
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="task_description" name="description" required maxlength="128"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assigned_user" class="form-label">Assign To</label>
+                        <select class="form-select" id="assigned_user" name="user_id" required>
+                            <option value="">Select a user...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addTask()">Add Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showCreateBoardModal() {
+    // Load teams for the dropdown
+    fetch('/api/teams/list/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(teams => {
+        const select = document.getElementById('team_id');
+        select.innerHTML = '<option value="">Select a team...</option>';
+        teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            select.appendChild(option);
+        });
+        new bootstrap.Modal(document.getElementById('createBoardModal')).show();
+    })
+    .catch(error => {
+        alert('Error loading teams: ' + error.message);
+    });
+}
+
+function createBoard() {
+    const form = document.getElementById('createBoardForm');
+    const data = {
+        name: form.name.value,
+        description: form.description.value,
+        team_id: form.team_id.value
+    };
+
+    fetch('/api/boards/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        window.location.href = "{% url 'list_boards' %}";
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function showAddTaskModal(boardId) {
+    // Load team members for the dropdown
+    fetch('/api/teams/users/list/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: boardId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        const select = document.getElementById('assigned_user');
+        select.innerHTML = '<option value="">Select a user...</option>';
+        data.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.display_name;
+            select.appendChild(option);
+        });
+        document.getElementById('board_id').value = boardId;
+        new bootstrap.Modal(document.getElementById('addTaskModal')).show();
+    })
+    .catch(error => {
+        alert('Error loading users: ' + error.message);
+    });
+}
+
+function addTask() {
+    const form = document.getElementById('addTaskForm');
+    const data = {
+        title: form.title.value,
+        description: form.task_description.value,
+        user_id: form.user_id.value,
+        board_id: form.board_id.value
+    };
+
+    if (!data.title || !data.description || !data.user_id || !data.board_id) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    fetch('/api/boards/tasks/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        alert('Task added successfully!');
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function viewBoardDetails(boardId) {
+    fetch('/api/boards/tasks/list/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: boardId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(tasks => {
+        populateTaskColumns(tasks);
+        new bootstrap.Modal(document.getElementById('boardDetailsModal')).show();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function populateTaskColumns(tasks) {
+    const columns = {
+        'OPEN': document.getElementById('openTasks'),
+        'IN_PROGRESS': document.getElementById('inProgressTasks'),
+        'COMPLETE': document.getElementById('completeTasks')
+    };
+
+    // Clear all columns
+    Object.values(columns).forEach(column => column.innerHTML = '');
+
+    // Group tasks by status
+    tasks.forEach(task => {
+        const taskElement = createTaskElement(task);
+        columns[task.status].appendChild(taskElement);
+    });
+}
+
+function createTaskElement(task) {
+    const div = document.createElement('div');
+    div.className = 'card mb-2';
+    div.innerHTML = `
+        <div class="card-body p-2">
+            <h6 class="card-title mb-1">${task.title}</h6>
+            <p class="card-text small mb-1">${task.description}</p>
+            <p class="card-text">
+                <small class="text-muted">Assigned to: ${task.assigned_to}</small>
+            </p>
+            <div class="btn-group btn-group-sm">
+                ${createStatusButtons(task)}
+            </div>
+        </div>
+    `;
+    return div;
+}
+
+function createStatusButtons(task) {
+    const statuses = ['OPEN', 'IN_PROGRESS', 'COMPLETE'];
+    return statuses
+        .filter(status => status !== task.status)
+        .map(status => `
+            <button class="btn btn-outline-primary btn-sm" 
+                    onclick="updateTaskStatus('${task.id}', '${status}')">
+                Move to ${status.replace('_', ' ')}
+            </button>
+        `).join('');
+}
+
+function updateTaskStatus(taskId, newStatus) {
+    fetch('/api/boards/tasks/update/', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: taskId,
+            status: newStatus
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function closeBoard(boardId) {
+    if (!confirm('Are you sure you want to close this board? All tasks must be completed.')) {
+        return;
+    }
+
+    fetch('/api/boards/close/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: boardId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function deleteBoard(boardId) {
+    if (!confirm('Are you sure you want to delete this board? This action cannot be undone.')) {
+        return;
+    }
+
+    fetch('/api/boards/delete/', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: boardId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        alert('Board deleted successfully!');
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+</script>
+{% endblock %} 

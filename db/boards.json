@@ -1,0 +1,54 @@
+[
+  {
+    "id": "1001",
+    "name": "WM Testing Sprint",
+    "description": "First sprint for WM project testing ",
+    "team_id": "102",
+    "creation_time": "2025-05-01T18:23:01.519197",
+    "status": "OPEN",
+    "tasks": [
+      {
+        "id": "2001",
+        "title": "Regression Testing 1",
+        "description": "Testing of WM module 1 all features",
+        "user_id": "1006",
+        "creation_time": "2025-05-01T18:37:49.009327",
+        "status": "IN_PROGRESS"
+      },
+      {
+        "id": "2002",
+        "title": "Regression Testing 2",
+        "description": "To test module 2 of WM project",
+        "user_id": "1006",
+        "creation_time": "2025-05-01T20:00:39.502495",
+        "status": "COMPLETE"
+      },
+      {
+        "id": "2003",
+        "title": "Regression Testing 3",
+        "description": "To test module 3 of WM project",
+        "user_id": "1004",
+        "creation_time": "2025-05-01T20:02:46.950548",
+        "status": "OPEN"
+      }
+    ]
+  },
+  {
+    "id": "1002",
+    "name": "WM Development Sprint",
+    "description": "First sprint for WM project development",
+    "team_id": "101",
+    "creation_time": "2025-05-01T20:04:24.534216",
+    "status": "OPEN",
+    "tasks": [
+      {
+        "id": "2004",
+        "title": "Develpment 1",
+        "description": "Develop Module 1 add and update feature",
+        "user_id": "1001",
+        "creation_time": "2025-05-01T20:04:57.313649",
+        "status": "OPEN"
+      }
+    ]
+  }
+]
